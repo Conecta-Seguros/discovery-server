@@ -20,7 +20,15 @@ repositories {
 extra["springCloudVersion"] = "2025.0.0"
 
 dependencies {
+	// Spring Boot dependencies
 	implementation("org.springframework.cloud:spring-cloud-starter-netflix-eureka-server")
+	implementation("org.springframework.boot:spring-boot-configuration-processor")
+	"developmentOnly"("org.springframework.boot:spring-boot-devtools")
+
+	// Annotations and utilities
+	implementation("org.projectlombok:lombok")
+
+	// Testing dependencies
 	testImplementation("org.springframework.boot:spring-boot-starter-test")
 	testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
