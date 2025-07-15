@@ -23,13 +23,18 @@ dependencies {
 	// Spring Boot dependencies
 	implementation("org.springframework.cloud:spring-cloud-starter-netflix-eureka-server")
 	implementation("org.springframework.boot:spring-boot-configuration-processor")
-	"developmentOnly"("org.springframework.boot:spring-boot-devtools")
+	implementation("org.springframework.boot:spring-boot-starter-actuator")
+	implementation("org.springframework.boot:spring-boot-starter-security")
 
 	// Annotations and utilities
 	implementation("org.projectlombok:lombok")
 
+	// Development dependencies
+	"developmentOnly"("org.springframework.boot:spring-boot-devtools")
+
 	// Testing dependencies
 	testImplementation("org.springframework.boot:spring-boot-starter-test")
+	testImplementation("org.springframework.security:spring-security-test")
 	testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 
