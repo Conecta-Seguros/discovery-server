@@ -6,8 +6,8 @@ El Discovery Server es un componente crítico de la plataforma de seguros Conect
 
 ## Tecnologías
 
-- Java 24
-- Spring Boot 3.5.3
+- Java 25
+- Spring Boot 3.5.6
 - Spring Cloud Netflix Eureka Server
 - Gradle
 - Spring Security
