@@ -7,6 +7,10 @@ plugins {
 group = "conectaseguros.co"
 version = "0.0.1-SNAPSHOT"
 
+springBoot {
+    mainClass.set("conectaseguros.co.discovery_server.DiscoveryServerApplication")
+}
+
 java {
 	toolchain {
 		languageVersion = JavaLanguageVersion.of(25)
