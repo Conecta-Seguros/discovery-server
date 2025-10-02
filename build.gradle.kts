@@ -33,6 +33,9 @@ dependencies {
 	// Annotations and utilities
 	implementation("org.projectlombok:lombok")
 
+    // Caffeine for caching
+    implementation("com.github.ben-manes.caffeine:caffeine")
+
 	// Development dependencies
 	"developmentOnly"("org.springframework.boot:spring-boot-devtools")
 
@@ -46,6 +49,9 @@ dependencyManagement {
 	imports {
 		mavenBom("org.springframework.cloud:spring-cloud-dependencies:${property("springCloudVersion")}")
 	}
+    dependencies {
+        dependency("com.github.ben-manes.caffeine:caffeine:3.2.2")
+    }
 }
 
 tasks.withType<Test> {
