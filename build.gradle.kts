@@ -33,6 +33,9 @@ dependencies {
 	// Annotations and utilities
 	implementation("org.projectlombok:lombok")
 
+    // Dotenv support
+    implementation("io.github.cdimascio:dotenv-java")
+
     // Caffeine for caching
     implementation("com.github.ben-manes.caffeine:caffeine")
 
@@ -51,6 +54,7 @@ dependencyManagement {
 	}
     dependencies {
         dependency("com.github.ben-manes.caffeine:caffeine:3.2.2")
+        dependency("io.github.cdimascio:dotenv-java:3.2.0")
     }
 }
 
