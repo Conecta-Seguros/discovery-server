@@ -17,11 +17,11 @@
         "java.configuration.runtimes": [
           {
             "name": "GraalVM",
-            "path": "/opt/graalvm",
+            "path": "/opt/graalvm-community-java2",
             "default": true
           }
         ],
-        "java.jdt.ls.java.home": "/opt/graalvm",
+        "java.jdt.ls.java.home": "/opt/graalvm-community-java2",
         "gradle.nestedProjects": true
       }
     }
@@ -57,7 +57,7 @@
   "workspaceFolder": "/workspace",
 
   "containerEnv": {
-    "JAVA_HOME": "/opt/graalvm",
+    "JAVA_HOME": "/opt/graalvm-community-java2",
     "GRADLE_USER_HOME": "/home/vscode/.gradle",
     "SPRING_PROFILES_ACTIVE": "dev"
   },
