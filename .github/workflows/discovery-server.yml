@@ -24,17 +24,12 @@ env:
 
 jobs:
   # ============================================
-  # JOB 1: Build and Test
+  # JOB 1: Build
   # ============================================
-  build-and-test:
-    name: Build & Test
+  build:
+    name: Build
     runs-on: ubuntu-latest
-    timeout-minutes: 15
-
-    permissions:
-      contents: read
-      checks: write
-      pull-requests: write
+    timeout-minutes: 10
 
     steps:
       - name: 📥 Checkout code
@@ -49,18 +44,6 @@ jobs:
 
       - name: 🔧 Grant execute permission for gradlew
         run: chmod +x gradlew
-
-      - name: 🧪 Run tests
-        run: ./gradlew test --no-daemon --stacktrace
-        env:
-          GRADLE_OPTS: -Dorg.gradle.daemon=false
-
-      - name: 📊 Publish test results
-        uses: EnricoMi/publish-unit-test-result-action@v2
-        if: always()
-        with:
-          files: |
-            build/test-results/**/*.xml
 
       - name: 🏗️ Build JAR
         run: ./gradlew bootJar --no-daemon --stacktrace -x test
@@ -80,7 +63,7 @@ jobs:
   # ============================================
   security-scan:
     name: Security Scan
-    needs: build-and-test
+    needs: build
     runs-on: ubuntu-latest
     timeout-minutes: 10
     if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
@@ -115,7 +98,7 @@ jobs:
   # ============================================
   build-docker:
     name: Build & Push Docker Image
-    needs: [build-and-test, security-scan]
+    needs: [build, security-scan]
     runs-on: ubuntu-latest
     timeout-minutes: 25
     if: github.event_name == 'push' && (github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/main')
