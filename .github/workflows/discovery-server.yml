@@ -180,7 +180,6 @@ jobs:
     environment:
       name: production
 
-
     steps:
       - name: 🔤 Convert repository name to lowercase
         id: repo_name
@@ -205,10 +204,6 @@ jobs:
             
             echo "📥 Pulling latest Discovery Server image..."
             docker pull ${{ env.REGISTRY }}/${{ steps.repo_name.outputs.repository_lower }}:latest
-            
-            # Tag como latest para docker-compose
-            echo "🏷️ Tagging image as latest..."
-            docker tag ${{ env.REGISTRY }}/${{ steps.repo_name.outputs.repository_lower }}:latest
             
             echo "🔄 Navigating to deployment directory..."
             cd /opt/conecta-seguros-backend || { echo "❌ Directory not found"; exit 1; }
