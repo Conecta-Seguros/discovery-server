@@ -208,15 +208,17 @@ jobs:
             echo "🔄 Navigating to deployment directory..."
             cd /opt/conecta-seguros-backend || { echo "❌ Directory not found"; exit 1; }
             
-            echo "🛑 Stop current containers..."
-            docker compose -f docker-compose-discovery.yml stop eureka-peer1 eureka-peer2 || true
-            docker compose -f docker-compose-discovery.yml rm -f eureka-peer1 eureka-peer2 || true
+            echo "🛑 Stop and remove containers..."
+            docker compose -f docker-compose-discovery.yml down
             
             echo "🚀 Start Discovery Server..."
-            docker compose -f docker-compose-discovery.yml up -d eureka-peer1 eureka-peer2
+            docker compose -f docker-compose-discovery.yml up -d
             
             echo "⏳ Waiting for services to be healthy..."
-            sleep 30
+            sleep 120
+            
+            echo "📊 Status:"
+            docker compose -f docker-compose-discovery.yml ps
             
             echo "🧹 Cleaning up old images..."
             docker image prune -af --filter "until=24h" || true
