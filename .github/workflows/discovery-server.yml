@@ -211,14 +211,23 @@ jobs:
             echo "🛑 Stop and remove containers..."
             docker compose -f docker-compose-discovery.yml down
             
-            echo "🚀 Start Discovery Server..."
-            docker compose -f docker-compose-discovery.yml up -d
+            echo "🚀 Start Discovery Server (without dependencies check)..."
+            docker compose -f docker-compose-discovery.yml up -d eureka-peer1
             
             echo "⏳ Waiting for services to be healthy..."
-            sleep 120
+            sleep 60
             
-            echo "📊 Status:"
-            docker compose -f docker-compose-discovery.yml ps
+            echo "📋 Peer 1 Logs:"
+            docker logs conecta-eureka-peer1 --tail 100
+            
+            echo "🏥 Manual Health Check:"
+            docker exec conecta-eureka-peer1 wget -O- http://localhost:8761/actuator/health || echo "Health check failed"
+            
+            echo "📊 Container Status:"
+            docker ps -a --filter name=conecta-eureka-peer1
+            
+            echo "🔍 Environment Variables:"
+            docker exec conecta-eureka-peer1 env | grep -E "EUREKA|SPRING" || true
             
             echo "🧹 Cleaning up old images..."
             docker image prune -af --filter "until=24h" || true
