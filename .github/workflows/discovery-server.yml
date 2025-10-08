@@ -82,16 +82,10 @@ jobs:
         with:
           scan-type: 'fs'
           scan-ref: '.'
-          format: 'sarif'
+          format: 'table'
           output: 'trivy-results.sarif'
-          severity: 'CRITICAL,HIGH'
-
-      - name: 📤 Upload Trivy results to GitHub Security
-        uses: github/codeql-action/upload-sarif@v3
-        if: always()
-        with:
-          sarif_file: 'trivy-results.sarif'
-          category: 'code-scan'
+          severity: 'CRITICAL,HIGH,MEDIUM'
+          exit-code: 0
 
   # ============================================
   # JOB 3: Build and Push Docker Image
