@@ -154,6 +154,11 @@ jobs:
           platforms: linux/amd64
           provenance: false
 
+      - name: 🔍 Debug - Show pushed tags
+        run: |
+          echo "Tags that should be pushed:"
+          echo "${{ steps.meta.outputs.tags }}"
+
       - name: 📋 Image digest
         run: echo "Image digest:- ${{ steps.build.outputs.digest }}"
 
@@ -199,12 +204,11 @@ jobs:
             echo "${{ secrets.GHCR_PAT }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
             
             echo "📥 Pulling latest Discovery Server image..."
-            docker pull ${{ env.REGISTRY }}/${{ steps.repo_name.outputs.repository_lower }}:develop-${{ github.sha }}
+            docker pull ${{ env.REGISTRY }}/${{ steps.repo_name.outputs.repository_lower }}:latest
             
             # Tag como latest para docker-compose
             echo "🏷️ Tagging image as latest..."
-            docker tag ${{ env.REGISTRY }}/${{ steps.repo_name.outputs.repository_lower }}:develop-${{ github.sha }} \
-                       ${{ env.REGISTRY }}/${{ steps.repo_name.outputs.repository_lower }}:latest
+            docker tag ${{ env.REGISTRY }}/${{ steps.repo_name.outputs.repository_lower }}:latest
             
             echo "🔄 Navigating to deployment directory..."
             cd /opt/conecta-seguros-backend || { echo "❌ Directory not found"; exit 1; }
