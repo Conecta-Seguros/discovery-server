@@ -208,12 +208,12 @@ jobs:
             echo "🔄 Navigating to deployment directory..."
             cd /opt/conecta-seguros-backend || { echo "❌ Directory not found"; exit 1; }
             
-            echo "🛑 Stopping current Discovery Server instances..."
-            docker compose stop eureka-peer1 eureka-peer2 || true
-            docker compose rm -f eureka-peer1 eureka-peer2 || true
+            echo "🛑 Stop current containers..."
+            docker compose -f docker-compose-discovery.yml stop eureka-peer1 eureka-peer2 || true
+            docker compose -f docker-compose-discovery.yml rm -f eureka-peer1 eureka-peer2 || true
             
-            echo "🚀 Starting Discovery Server with latest image..."
-            docker compose up -d eureka-peer1 eureka-peer2
+            echo "🚀 Start Discovery Server..."
+            docker compose -f docker-compose-discovery.yml up -d eureka-peer1 eureka-peer2
             
             echo "⏳ Waiting for services to be healthy..."
             sleep 30
