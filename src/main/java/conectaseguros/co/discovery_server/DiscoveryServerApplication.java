@@ -1,11 +1,10 @@
 package conectaseguros.co.discovery_server;
 
 import io.github.cdimascio.dotenv.Dotenv;
+import java.util.Objects;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.cloud.netflix.eureka.server.EnableEurekaServer;
-
-import java.util.Objects;
 
 @SpringBootApplication
 @EnableEurekaServer
@@ -15,6 +14,7 @@ public class DiscoveryServerApplication {
 
         Dotenv dotenv = Dotenv.configure()
                 .directory("./discovery-server")
+                .ignoreIfMissing()
                 .load();
 
         System.setProperty("EUREKA_PORT", Objects.requireNonNull(dotenv.get("EUREKA_PORT")));
