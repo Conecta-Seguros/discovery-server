@@ -5,16 +5,10 @@ on:
     branches:
       - develop
       - main
-    paths:
-      - 'discovery-server/**'
-      - '.github/workflows/discovery-server.yml'
   pull_request:
     branches:
       - develop
       - main
-    paths:
-      - 'discovery-server/**'
-      - '.github/workflows/discovery-server.yml'
   workflow_dispatch:  # Permite ejecutar manualmente
 
 # Evitar builds concurrentes del mismo workflow
@@ -24,7 +18,7 @@ concurrency:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }}/discovery-server
+  IMAGE_NAME: ${{ github.repository }}
   JAVA_VERSION: '25'
   GRADLE_VERSION: '9.1.0'
 
@@ -36,10 +30,6 @@ jobs:
     name: Build & Test
     runs-on: ubuntu-latest
     timeout-minutes: 15
-
-    defaults:
-      run:
-        working-directory: ./discovery-server
 
     steps:
       - name: 📥 Checkout code
@@ -65,7 +55,7 @@ jobs:
         if: always()
         with:
           files: |
-            discovery-server/build/test-results/**/*.xml
+            build/test-results/**/*.xml
 
       - name: 🏗️ Build JAR
         run: ./gradlew bootJar --no-daemon --stacktrace -x test
@@ -76,7 +66,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: discovery-server-jar
-          path: discovery-server/build/libs/*.jar
+          path: build/libs/*.jar
           retention-days: 1
           if-no-files-found: error
 
@@ -98,7 +88,7 @@ jobs:
         uses: aquasecurity/trivy-action@master
         with:
           scan-type: 'fs'
-          scan-ref: './discovery-server'
+          scan-ref: '.'
           format: 'sarif'
           output: 'trivy-results.sarif'
           severity: 'CRITICAL,HIGH'
@@ -151,7 +141,7 @@ jobs:
           tags: |
             type=ref,event=branch
             type=sha,prefix={{branch}}-
-            type=raw,value=latest,enable={{is_default_branch}}
+            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/develop' }}
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
 
@@ -159,8 +149,8 @@ jobs:
         id: build
         uses: docker/build-push-action@v5
         with:
-          context: ./discovery-server
-          file: ./discovery-server/Dockerfile
+          context: .
+          file: ./Dockerfile
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: |
@@ -194,10 +184,10 @@ jobs:
         run: echo "Image digest:- ${{ steps.build.outputs.digest }}"
 
   # ============================================
-  # JOB 4: Deploy to VPS
+  # JOB 4: Deploy to Production
   # ============================================
   deploy-to-vps:
-    name: Deploy to VPS
+    name: Deploy to Production
     needs: build-docker
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -234,11 +224,11 @@ jobs:
             cd /opt/conecta-seguros-backend || { echo "❌ Directory not found"; exit 1; }
             
             echo "🛑 Stopping current Discovery Server instances..."
-            docker-compose stop eureka-peer1 eureka-peer2 || true
-            docker-compose rm -f eureka-peer1 eureka-peer2 || true
+            docker compose stop eureka-peer1 eureka-peer2 || true
+            docker compose rm -f eureka-peer1 eureka-peer2 || true
             
             echo "🚀 Starting Discovery Server with latest image..."
-            docker-compose up -d eureka-peer1 eureka-peer2
+            docker compose up -d eureka-peer1 eureka-peer2
             
             echo "⏳ Waiting for services to be healthy..."
             sleep 30
