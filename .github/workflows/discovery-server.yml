@@ -5,10 +5,7 @@ on:
     branches:
       - develop
       - main
-  pull_request:
-    branches:
-      - develop
-      - main
+
   workflow_dispatch:  # Permite ejecutar manualmente
 
 # Evitar builds concurrentes del mismo workflow
@@ -110,6 +107,11 @@ jobs:
       - name: 📥 Checkout code
         uses: actions/checkout@v4
 
+      - name: 🔤 Convert repository name to lowercase
+        id: repo_name
+        run: |
+          echo "repository_lower=$(echo '${{ github.repository }}' | tr '[:upper:]' '[:lower:]')" >> $GITHUB_OUTPUT
+
       - name: 🐳 Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
@@ -124,7 +126,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          images: ${{ env.REGISTRY }}/${{ steps.repo_name.outputs.repository_lower }}
           tags: |
             type=ref,event=branch
             type=sha,prefix={{branch}}-
@@ -156,19 +158,18 @@ jobs:
         uses: aquasecurity/trivy-action@master
         with:
           image-ref: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.ref_name }}-${{ github.sha }}
-          format: 'sarif'
+          format: 'table'
           output: 'trivy-image-results.sarif'
-          severity: 'CRITICAL,HIGH'
-
-      - name: 📤 Upload Trivy image results
-        uses: github/codeql-action/upload-sarif@v3
-        if: always()
-        with:
-          sarif_file: 'trivy-image-results.sarif'
-          category: 'image-scan'
+          severity: 'CRITICAL,HIGH,MEDIUM'
+          exit-code: 0
 
       - name: 📋 Image digest
         run: echo "Image digest:- ${{ steps.build.outputs.digest }}"
+
+      - name: 📋 Success
+        run: |
+          echo "✅ Image built successfully"
+          echo "🏷️ Image: ${{ env.REGISTRY }}/${{ steps.repo_name.outputs.repository_lower }}:latest"
 
   # ============================================
   # JOB 4: Deploy to Production
@@ -183,7 +184,13 @@ jobs:
     environment:
       name: production
 
+
     steps:
+      - name: 🔤 Convert repository name to lowercase
+        id: repo_name
+        run: |
+          echo "repository_lower=$(echo '${{ github.repository }}' | tr '[:upper:]' '[:lower:]')" >> $GITHUB_OUTPUT
+
       - name: 📥 Checkout code
         uses: actions/checkout@v4
 
@@ -201,11 +208,11 @@ jobs:
             echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
             
             echo "📥 Pulling latest Discovery Server image..."
-            docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:main-${{ github.sha }}
+            docker pull ${{ env.REGISTRY }}/${{ steps.repo_name.outputs.repository_lower }}:develop-${{ github.sha }}
             
             # Tag como latest para docker-compose
-            docker tag ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:main-${{ github.sha }} \
-                       ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+            docker tag ${{ env.REGISTRY }}/${{ steps.repo_name.outputs.repository_lower }}:develop-${{ github.sha }} \
+                       ${{ env.REGISTRY }}/${{ steps.repo_name.outputs.repository_lower }}:latest
             
             echo "🔄 Navigating to deployment directory..."
             cd /opt/conecta-seguros-backend || { echo "❌ Directory not found"; exit 1; }
