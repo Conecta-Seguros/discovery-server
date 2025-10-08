@@ -85,6 +85,11 @@ jobs:
     timeout-minutes: 10
     if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
 
+    permissions:
+      contents: read
+      security-events: write
+      actions: read
+
     steps:
       - name: 📥 Checkout code
         uses: actions/checkout@v4
