@@ -3,15 +3,15 @@ name: Discovery Server CI/CD
 on:
   push:
     branches:
-      - main
       - develop
+      - main
     paths:
       - 'discovery-server/**'
       - '.github/workflows/discovery-server.yml'
   pull_request:
     branches:
-      - main
       - develop
+      - main
     paths:
       - 'discovery-server/**'
       - '.github/workflows/discovery-server.yml'
@@ -118,7 +118,7 @@ jobs:
     needs: [build-and-test, security-scan]
     runs-on: ubuntu-latest
     timeout-minutes: 25
-    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop')
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/main')
 
     permissions:
       contents: read
@@ -201,11 +201,10 @@ jobs:
     needs: build-docker
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: github.event_name == 'push' && github.ref == 'refs/heads/develop'
 
     environment:
       name: production
-      url: http://${{ secrets.VPS_HOST }}:8761
 
     steps:
       - name: 📥 Checkout code
@@ -285,6 +284,7 @@ jobs:
         run: |
           if [ "${{ job.status }}" == "success" ]; then
             echo "✅ Discovery Server deployed successfully to production!"
+            echo "🌐 Access Eureka Dashboard at: http://${{ secrets.VPS_HOST }}:8761"
           else
             echo "❌ Discovery Server deployment failed!"
           fi
@@ -297,11 +297,10 @@ jobs:
     needs: build-docker
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    if: github.event_name == 'push' && github.ref == 'refs/heads/develop'
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
 
     environment:
       name: staging
-      url: http://${{ secrets.STAGING_HOST }}:8761
 
     steps:
       - name: 📥 Checkout code
