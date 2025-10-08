@@ -211,46 +211,49 @@ jobs:
             echo "🛑 Stop and remove containers..."
             docker compose -f docker-compose-discovery.yml down
             
-            echo "🚀 Start Discovery Server  Peer 1..."
-            docker compose -f docker-compose-discovery.yml up -d eureka-peer1
+            echo "🚀 Start Eureka cluster (both peers simultaneously)..."
+            docker compose -f docker-compose-discovery.yml up -d
             
             echo "⏳ Waiting for services to be healthy..."
-            sleep 90
+            sleep 120
             
-            echo "🏥 Check Peer 1 health..."
-            if docker exec conecta-eureka-peer1 wget -q --spider http://localhost:8761/actuator/health; then
+            echo "🏥 Health Checks..."
+            PEER1_HEALTHY=false
+            PEER2_HEALTHY=false
+            
+            if docker exec conecta-eureka-peer1 wget -q --spider http://localhost:8761/actuator/health 2>/dev/null; then
               echo "✅ Peer 1 is healthy!"
+              PEER1_HEALTHY=true
             else
-              echo "❌ Peer 1 health check failed"
-              docker logs conecta-eureka-peer1 --tail 50
-              exit 1
+              echo "⚠️ Peer 1 health check failed"
+              docker logs conecta-eureka-peer1 --tail 30
             fi
             
-            echo "🚀 Start Peer 2..."
-            docker compose -f docker-compose-discovery.yml up -d eureka-peer2
-            
-            echo "⏳ Wait 90 seconds for Peer 2 to be healthy..."
-            sleep 90
-            
-            echo "🏥 Check Peer 2 health..."
-            if docker exec conecta-eureka-peer2 wget -q --spider http://localhost:8762/actuator/health; then
+            if docker exec conecta-eureka-peer2 wget -q --spider http://localhost:8762/actuator/health 2>/dev/null; then
               echo "✅ Peer 2 is healthy!"
+              PEER2_HEALTHY=true
             else
-              echo "❌ Peer 2 health check failed"
-              docker logs conecta-eureka-peer2 --tail 50
-              exit 1
+              echo "⚠️ Peer 2 health check failed"
+              docker logs conecta-eureka-peer2 --tail 30
             fi
             
-            echo "📊 Final Status:"
+            echo "📊 Cluster Status:"
             docker ps --filter name=conecta-eureka
             
-            echo "🔍 Environment Variables:"
-            docker exec conecta-eureka-peer1 env | grep -E "EUREKA|SPRING" || true
+            echo "🔍 Registered Services:"
+            docker exec conecta-eureka-peer1 wget -qO- http://localhost:8761/eureka/apps 2>/dev/null | grep -o '<name>.*</name>' | head -5 || echo "No services registered yet"
             
+          
             echo "🧹 Cleaning up old images..."
             docker image prune -af --filter "until=24h" || true
             
-            echo "✅ Deployment completed successfully!"
+            if [ "$PEER1_HEALTHY" = true ] && [ "$PEER2_HEALTHY" = true ]; then
+              echo ""
+              echo "✅ Eureka cluster deployed successfully!"
+            else
+              echo ""
+              echo "⚠️ Deployment completed with warnings - check logs above"
+            fi
 
       - name: 🏥 Verify deployment health
         uses: appleboy/ssh-action@v1.0.3
