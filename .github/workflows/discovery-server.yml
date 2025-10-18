@@ -209,10 +209,10 @@ jobs:
             cd /opt/conecta-seguros-backend || { echo "❌ Directory not found"; exit 1; }
             
             echo "🛑 Stop and remove containers..."
-            docker compose -f docker-compose-discovery.yml down
+            docker compose --env-file .env-discovery -f docker-compose-discovery.yml down
             
             echo "🚀 Start Eureka cluster (both peers simultaneously)..."
-            docker compose -f docker-compose-discovery.yml up -d
+            docker compose --env-file .env-discovery -f docker-compose-discovery.yml up -d
             
             echo "⏳ Waiting for services to be healthy..."
             sleep 120
