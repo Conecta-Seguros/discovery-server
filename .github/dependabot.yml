@@ -8,6 +8,7 @@ updates:
       interval: weekly
       day: monday
       time: "09:00"
+      timezone: "America/Bogota"
 
     cooldown:
       default-days: 7
@@ -72,6 +73,7 @@ updates:
       interval: weekly
       day: monday
       time: "09:00"
+      timezone: "America/Bogota"
 
     cooldown:
       default-days: 7
