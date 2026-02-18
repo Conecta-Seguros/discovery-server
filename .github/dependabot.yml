@@ -10,8 +10,22 @@ updates:
       time: "09:00"
       timezone: "America/Bogota"
 
-    cooldown:
-      default-days: 7
+    open-pull-requests-limit: 8
+
+    reviewers:
+      - "Maicol-19ty"
+
+    assignees:
+      - "Maicol-19ty"
+
+    labels:
+      - "dependencies"
+      - "gradle"
+      - "java"
+
+    commit-message:
+      prefix: "build"
+      prefix-development: "chore"
 
     groups:
 
@@ -49,23 +63,6 @@ updates:
           - minor
           - patch
 
-    open-pull-requests-limit: 8
-
-    reviewers:
-      - "Maicol-19ty"
-
-    assignees:
-      - "Maicol-19ty"
-
-    labels:
-      - "dependencies"
-      - "gradle"
-      - "java"
-
-    commit-message:
-      prefix: "build"
-      prefix-development: "chore"
-
   - package-ecosystem: "github-actions"
     directory: /
 
@@ -75,25 +72,23 @@ updates:
       time: "09:00"
       timezone: "America/Bogota"
 
-    cooldown:
-      default-days: 7
+    open-pull-requests-limit: 3
+
+    labels:
+      - "dependencies"
+      - "github-actions"
+      -
+    commit-message:
+      prefix: "ci"
 
     groups:
-        github-actions:
-            patterns:
-            - "*"
-            update-types:
-            - minor
-            - patch
 
-        open-pull-requests-limit: 3
-
-        labels:
-          - "dependencies"
-          - "github-actions"
-
-        commit-message:
-          prefix: "ci"
+      github-actions:
+        patterns:
+          - "*"
+        update-types:
+          - minor
+          - patch
 
   - package-ecosystem: docker
     directory: /
@@ -101,9 +96,12 @@ updates:
     schedule:
       interval: weekly
 
-    cooldown:
-      default-days: 7
+    open-pull-requests-limit: 3
 
+    labels:
+      - "dependencies"
+      - "docker"
+      -
     groups:
 
       docker-images:
@@ -112,10 +110,3 @@ updates:
         update-types:
           - minor
           - patch
-
-        open-pull-requests-limit: 3
-
-        labels:
-          - "dependencies"
-          - "docker"
-
