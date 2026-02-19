@@ -29,10 +29,12 @@ public class SecurityConfig {
      * Chain 1 (Order 1): Actuator endpoints.
      *
      * <ul>
-     *   <li>/actuator/health and /actuator/info are public — used by load balancer
-     *       liveness/readiness probes and exposed for monitoring without auth.</li>
-     *   <li>All other actuator endpoints (metrics, prometheus, env, …) require
-     *       HTTP Basic authentication to prevent information disclosure.</li>
+     *   <li>/actuator/health is public — required by Kubernetes liveness/readiness probes
+     *       and load balancer health checks, which cannot send credentials.</li>
+     *   <li>All other actuator endpoints (info, metrics, prometheus, env, …) require
+     *       HTTP Basic authentication. /actuator/info is intentionally protected because
+     *       the info endpoint can expose build metadata, Java runtime version, and OS
+     *       details (via management.info.java/os contributors) that aid fingerprinting.</li>
      * </ul>
      *
      * Session policy is STATELESS: HTTP Basic sends credentials on every request,
@@ -44,7 +46,7 @@ public class SecurityConfig {
         return http
                 .securityMatcher(EndpointRequest.toAnyEndpoint())
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(EndpointRequest.to("health", "info")).permitAll()
+                        .requestMatchers(EndpointRequest.to("health")).permitAll()
                         .anyRequest().authenticated()
                 )
                 .httpBasic(withDefaults())
