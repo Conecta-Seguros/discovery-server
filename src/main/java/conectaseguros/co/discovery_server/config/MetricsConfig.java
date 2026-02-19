@@ -5,6 +5,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.micrometer.metrics.autoconfigure.MeterRegistryCustomizer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.env.Environment;
 
 /**
  * Applies Micrometer common tags to every meter registered in this application.
@@ -17,8 +18,12 @@ import org.springframework.context.annotation.Configuration;
  * <ul>
  *   <li>{@code application} — Spring application name (e.g. {@code discovery-server}).
  *       Matches the convention used across the Caicedo Seguros platform.</li>
- *   <li>{@code environment} — active Spring profile (e.g. {@code dev}, {@code k8s},
- *       {@code k8s-ha}). Defaults to {@code default} when no profile is active.</li>
+ *   <li>{@code environment} — comma-joined active Spring profiles (e.g. {@code dev},
+ *       {@code k8s,debug}). Falls back to {@code default} when no profile is active.
+ *       Uses {@link Environment#getActiveProfiles()} rather than
+ *       {@code @Value("${spring.profiles.active}")} to correctly handle multiple
+ *       simultaneous profiles and cases where the property is not explicitly set in
+ *       the Spring {@code Environment} (e.g. when activated via JVM system property).</li>
  * </ul>
  */
 @Configuration
@@ -27,11 +32,13 @@ public class MetricsConfig {
     @Bean
     public MeterRegistryCustomizer<MeterRegistry> commonTags(
             @Value("${spring.application.name}") String appName,
-            @Value("${spring.profiles.active:default}") String profile) {
+            Environment environment) {
+        String[] active = environment.getActiveProfiles();
+        String profiles = active.length > 0 ? String.join(",", active) : "default";
         return registry -> registry.config()
                 .commonTags(
                         "application", appName,
-                        "environment", profile
+                        "environment", profiles
                 );
     }
 }

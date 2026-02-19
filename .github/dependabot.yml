@@ -77,7 +77,7 @@ updates:
     labels:
       - "dependencies"
       - "github-actions"
-      -
+
     commit-message:
       prefix: "ci"
 
@@ -101,7 +101,7 @@ updates:
     labels:
       - "dependencies"
       - "docker"
-      -
+
     groups:
 
       docker-images:
