@@ -23,7 +23,7 @@ reviews:
     - "!**/test/**"
 
   tools:
-    sonarlint:
+    pmd:
       enabled: true
     gitleaks:
       enabled: true
