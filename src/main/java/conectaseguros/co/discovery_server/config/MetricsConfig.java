@@ -29,6 +29,13 @@ import org.springframework.core.env.Environment;
 @Configuration
 public class MetricsConfig {
 
+    /**
+     * Configure Micrometer common tags to apply to every meter registry.
+     *
+     * @param appName the application name from spring.application.name used for the "application" tag
+     * @param profile the active Spring profile (defaults to "default") used for the "environment" tag
+     * @return a MeterRegistryCustomizer that adds "application" and "environment" common tags to all meters
+     */
     @Bean
     public MeterRegistryCustomizer<MeterRegistry> commonTags(
             @Value("${spring.application.name}") String appName,

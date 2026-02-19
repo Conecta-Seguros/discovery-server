@@ -63,21 +63,15 @@ public class SecurityConfig {
     }
 
     /**
-     * Chain 2 (Order 2): Eureka REST API and dashboard.
+     * Configure security for the Eureka REST API and dashboard endpoints.
      *
-     * <p>All requests require HTTP Basic authentication. This covers:
-     * <ul>
-     *   <li>/eureka/** — service registration and discovery calls from microservice clients.</li>
-     *   <li>/ and /lastn — the Eureka web dashboard.</li>
-     * </ul>
+     * <p>Requires HTTP Basic authentication for all requests; disables CSRF; enforces
+     * stateless session management; and applies secure HTTP headers (deny framing,
+     * set content-type options, enable cache-control, and apply the default referrer policy).
+     * HSTS is intentionally omitted because TLS is terminated before the application.
      *
-     * <p>CSRF is disabled globally: with STATELESS session policy there are no session
-     * cookies, so CSRF attacks cannot be mounted. The previous approach of
-     * {@code ignoringRequestMatchers("/eureka/**")} was incomplete because the dashboard
-     * UI also issues POST and PUT requests.
-     *
-     * <p>HSTS is intentionally omitted: TLS is terminated at the ingress/load balancer;
-     * the application only sees plain HTTP internally.
+     * @param http the HttpSecurity to configure
+     * @return the configured SecurityFilterChain that secures Eureka endpoints
      */
     @Bean
     @Order(2)
@@ -100,13 +94,17 @@ public class SecurityConfig {
     }
 
     /**
-     * Provides an in-memory {@link UserDetailsService} backed by credentials defined in
-     * the active Spring profile ({@code application-dev.properties},
-     * {@code application-k8s.properties}, etc.).
-     *
-     * <p>Passwords are encoded with BCrypt at startup so they are never stored in plain
-     * text in memory or logged by the framework.
-     */
+         * Provides an in-memory {@link UserDetailsService} backed by credentials read from the
+         * active Spring {@link Environment}.
+         *
+         * <p>Reads username from {@code spring.security.user.name} (default: {@code eureka})
+         * and password from {@code spring.security.user.password}. The password is encoded with
+         * BCrypt before creating the in-memory user.
+         *
+         * @param env the Spring Environment used to obtain security properties
+         * @return an {@link InMemoryUserDetailsManager} containing a single user with role {@code EUREKA}
+         * @throws IllegalStateException if {@code spring.security.user.password} is missing or blank
+         */
     @Bean
     public UserDetailsService userDetailsService(Environment env) {
         String username = env.getProperty("spring.security.user.name", "eureka");
@@ -129,9 +127,9 @@ public class SecurityConfig {
     }
 
     /**
-     * BCrypt is the industry-standard adaptive password hashing algorithm.
-     * It applies a random salt per hash and its cost factor increases hash time
-     * proportionally to resist brute-force attacks on stolen hashes.
+     * Create a PasswordEncoder that uses the BCrypt hashing algorithm.
+     *
+     * @return a PasswordEncoder configured to hash passwords with BCrypt
      */
     @Bean
     public PasswordEncoder passwordEncoder() {
