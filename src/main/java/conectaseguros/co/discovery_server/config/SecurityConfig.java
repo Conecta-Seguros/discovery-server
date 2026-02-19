@@ -1,7 +1,7 @@
 package conectaseguros.co.discovery_server.config;
 
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.boot.actuate.autoconfigure.security.servlet.EndpointRequest;
+import org.springframework.boot.security.autoconfigure.actuate.web.servlet.EndpointRequest;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
@@ -40,7 +40,7 @@ public class SecurityConfig {
      */
     @Bean
     @Order(1)
-    public SecurityFilterChain actuatorSecurityFilterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain actuatorSecurityFilterChain(HttpSecurity http) {
         return http
                 .securityMatcher(EndpointRequest.toAnyEndpoint())
                 .authorizeHttpRequests(auth -> auth
@@ -79,7 +79,7 @@ public class SecurityConfig {
      */
     @Bean
     @Order(2)
-    public SecurityFilterChain eurekaSecurityFilterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain eurekaSecurityFilterChain(HttpSecurity http) {
         return http
                 .authorizeHttpRequests(auth -> auth
                         .anyRequest().authenticated()
@@ -109,6 +109,13 @@ public class SecurityConfig {
     public UserDetailsService userDetailsService(Environment env) {
         String username = env.getProperty("spring.security.user.name", "eureka");
         String rawPassword = env.getProperty("spring.security.user.password", "");
+        if (rawPassword.isBlank()) {
+            throw new IllegalStateException(
+                    "Discovery Server security misconfiguration: " +
+                    "spring.security.user.password must be set and non-empty. " +
+                    "Configure it in the active Spring profile (application-dev.properties, " +
+                    "application-k8s.properties, etc.) or in the .env file.");
+        }
         log.info("Configuring in-memory UserDetailsService for user '{}'", username);
         return new InMemoryUserDetailsManager(
                 User.builder()
