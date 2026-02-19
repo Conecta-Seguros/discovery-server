@@ -1,53 +1,50 @@
-# Build outputs
+# Version control
+.git
+.gitignore
+
+# Build output (se genera dentro del container)
 build/
-target/
 out/
 bin/
+target/
 
-# Gradle
-.gradle/
-gradle/wrapper/gradle-wrapper.jar
-
-# IDE files
+# IDE
 .idea/
-.vscode/
-.settings/
-.classpath
-.project
 *.iml
 *.ipr
 *.iws
-
-# OS files
-.DS_Store
-Thumbs.db
+.vscode/
+.settings/
+.project
+.classpath
 *.swp
 *.swo
-*~
 
-# Git
-.git/
-.gitignore
-.gitattributes
+# CI/CD
+.github/
+.gitlab-ci.yml
+Jenkinsfile
+
+# Infrastructure (no se necesita para build de imagen)
+infrastructure/
+k8s/
+docker-compose*.yml
+.env*
 
 # Documentation
-README.md
-docs/
 *.md
+docs/
+LICENSE
 
-# Test files
-src/test/
-
-# Logs
-logs/
+# OS
+.DS_Store
+Thumbs.db
 *.log
 
-# Environment files
-.env
-.env.local
-.env.*.local
+# Node (si hay frontend tooling)
+node_modules/
 
-# Docker
-Dockerfile
-docker-compose*.yml
-.dockerignore
+# Gradle wrapper cache (se descarga dentro del container)
+.gradle/
+
+# Test results

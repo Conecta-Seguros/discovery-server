@@ -6,7 +6,7 @@ plugins {
 }
 
 group = "conectaseguros.co"
-version = "0.0.1-SNAPSHOT"
+version = "1.0.0"
 
 springBoot {
     mainClass.set("conectaseguros.co.discovery_server.DiscoveryServerApplication")
