@@ -111,6 +111,13 @@ public class SecurityConfig {
     public UserDetailsService userDetailsService(Environment env) {
         String username = env.getProperty("spring.security.user.name", "eureka");
         String rawPassword = env.getProperty("spring.security.user.password", "");
+        if (username.isBlank()) {
+            throw new IllegalStateException(
+                    "Discovery Server security misconfiguration: " +
+                    "spring.security.user.name must be set and non-empty. " +
+                    "Configure it in the active Spring profile (application-dev.properties, " +
+                    "application-k8s.properties, etc.) or in the .env file.");
+        }
         if (rawPassword.isBlank()) {
             throw new IllegalStateException(
                     "Discovery Server security misconfiguration: " +
