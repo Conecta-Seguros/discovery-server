@@ -29,6 +29,15 @@ import java.util.concurrent.TimeUnit;
 @EnableCaching
 public class CacheConfig {
 
+    /**
+     * Create and configure a Caffeine-backed CacheManager for Spring's caching.
+     *
+     * Configures caches to expire entries 10 minutes after write, limit each cache to 500 entries,
+     * and enable statistics recording for Micrometer integration when available.
+     *
+     * @return a CacheManager backed by Caffeine with 10-minute expireAfterWrite, maximum size 500,
+     *         and statistics recording enabled
+     */
     @Bean
     public CacheManager cacheManager() {
         CaffeineCacheManager manager = new CaffeineCacheManager();
