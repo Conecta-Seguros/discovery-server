@@ -48,7 +48,7 @@ jobs:
           GRADLE_OPTS: -Dorg.gradle.daemon=false
 
       - name: 📦 Upload JAR artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: discovery-server-jar
           path: build/libs/*.jar

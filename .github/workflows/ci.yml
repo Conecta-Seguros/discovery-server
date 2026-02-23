@@ -96,7 +96,7 @@ jobs:
         run: ./gradlew bootJar --no-daemon -x test
 
       - name: Upload build artifacts
-        uses: actions/upload-artifact@v6.0.0
+        uses: actions/upload-artifact@v6
         with:
           name: build-output
           path: |
