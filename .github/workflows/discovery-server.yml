@@ -190,7 +190,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: 🚀 Deploy to VPS via SSH
-        uses: appleboy/ssh-action@v1.0.3
+        uses: appleboy/ssh-action@v1.2.5
         with:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USERNAME }}
@@ -256,7 +256,7 @@ jobs:
             fi
 
       - name: 🏥 Verify deployment health
-        uses: appleboy/ssh-action@v1.0.3
+        uses: appleboy/ssh-action@v1.2.5
         with:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USERNAME }}
@@ -314,7 +314,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: 🚀 Deploy to Staging VPS
-        uses: appleboy/ssh-action@v1.0.3
+        uses: appleboy/ssh-action@v1.2.5
         with:
           host: ${{ secrets.STAGING_HOST }}
           username: ${{ secrets.STAGING_USERNAME }}
