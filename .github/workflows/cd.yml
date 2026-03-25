@@ -135,42 +135,31 @@ jobs:
           key: ${{ secrets.VPS_SSH_KEY }}
           port: ${{ secrets.VPS_PORT }}
           script: |
-            set -e
             export KUBECONFIG=/etc/rancher/k3s/k3s.yaml
 
-            echo "Restarting eureka-server deployment in test namespace..."
-            kubectl rollout restart deployment/eureka-server -n test
-
-            echo "Waiting for rollout to complete..."
-            kubectl rollout status deployment/eureka-server -n test --timeout=120s
-
-            echo "Current pods:"
-            kubectl get pods -n test -l app=eureka-server
-
-      - name: Verify pod readiness
-        uses: appleboy/ssh-action@v1.2.5
-        with:
-          host: ${{ secrets.VPS_HOST }}
-          username: ${{ secrets.VPS_USERNAME }}
-          key: ${{ secrets.VPS_SSH_KEY }}
-          port: ${{ secrets.VPS_PORT }}
-          script: |
-            export KUBECONFIG=/etc/rancher/k3s/k3s.yaml
-
-            POD=$(kubectl get pod -n test -l app=eureka-server \
-              -o jsonpath='{.items[0].metadata.name}' 2>/dev/null)
-
-            if [ -z "$POD" ]; then
-              echo "No eureka-server pod found in test namespace"
+            # Deployment must exist — first-time setup is done via deploy.sh, not CD
+            if ! kubectl get deployment eureka-server -n test &>/dev/null; then
+              echo "Deployment 'eureka-server' not found in test namespace."
+              echo "Run: ./scripts/deploy.sh deploy test"
               exit 1
             fi
 
-            echo "Pod: $POD — waiting for Ready condition..."
-            kubectl wait --for=condition=Ready pod/"$POD" -n test --timeout=120s
+            echo "Restarting eureka-server..."
+            kubectl rollout restart deployment/eureka-server -n test
 
-            echo "Checking actuator health endpoint..."
-            kubectl exec "$POD" -n test -- \
-              wget -qO- http://localhost:8761/actuator/health 2>/dev/null \
-              || echo "Health endpoint not reachable yet (pod may still be starting)"
+            echo "Waiting for rollout (timeout: 180s)..."
+            if kubectl rollout status deployment/eureka-server -n test --timeout=180s; then
+              echo "Rollout completed successfully."
+            else
+              echo "Rollout timed out — pod diagnostics:"
+              kubectl get pods -n test -l app=eureka-server -o wide
+              echo ""
+              echo "Recent logs (last 40 lines):"
+              kubectl logs -l app=eureka-server -n test --tail=40 --previous 2>/dev/null \
+                || kubectl logs -l app=eureka-server -n test --tail=40 2>/dev/null \
+                || echo "No logs available yet"
+            fi
 
-            echo "Deployment to test environment verified"
+            echo ""
+            echo "Current pod status:"
+            kubectl get pods -n test -l app=eureka-server
