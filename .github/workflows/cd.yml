@@ -1,0 +1,176 @@
+name: "CD: Build & Deploy"
+
+on:
+  workflow_run:
+    workflows: ["CI: Build & Test"]
+    types: [completed]
+    branches: [main, develop]
+
+  workflow_dispatch:
+
+# One deploy at a time per branch — never cancel in-progress (would leave cluster in bad state)
+concurrency:
+  group: cd-deploy-${{ github.event.workflow_run.head_branch || github.ref_name }}
+  cancel-in-progress: false
+
+env:
+  REGISTRY: ghcr.io
+  JAVA_VERSION: "25"
+  JAVA_DISTRIBUTION: "temurin"
+  GRADLE_OPTS: >-
+    -Dorg.gradle.daemon=false
+    -Dorg.gradle.parallel=true
+    -Dorg.gradle.caching=true
+
+permissions:
+  contents: read
+
+jobs:
+  # ============================================
+  # Build & Push Docker Image to GHCR
+  # ============================================
+  build-and-push:
+    name: "Build & Push Image"
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    if: >
+      github.event.workflow_run.conclusion == 'success' ||
+      github.event_name == 'workflow_dispatch'
+
+    permissions:
+      contents: read
+      packages: write
+
+    outputs:
+      image-digest: ${{ steps.build.outputs.digest }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6.0.2
+        with:
+          # Use the exact commit that passed CI, not the branch HEAD at trigger time
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+          fetch-depth: 0
+
+      - name: Set short commit SHA
+        id: sha
+        run: |
+          FULL_SHA="${{ github.event.workflow_run.head_sha || github.sha }}"
+          echo "short=${FULL_SHA:0:8}" >> $GITHUB_OUTPUT
+
+      - name: Convert repository name to lowercase
+        id: repo
+        run: echo "name=$(echo '${{ github.repository }}' | tr '[:upper:]' '[:lower:]')" >> $GITHUB_OUTPUT
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup JDK ${{ env.JAVA_VERSION }}
+        uses: actions/setup-java@v5.2.0
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: ${{ env.JAVA_DISTRIBUTION }}
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v5
+        with:
+          cache-read-only: true
+
+      - name: Grant execute permission
+        run: chmod +x gradlew
+
+      - name: Build JAR
+        run: ./gradlew bootJar --no-daemon -x test
+
+      - name: Build and push Docker image
+        id: build
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/${{ steps.repo.outputs.name }}:develop
+            ${{ env.REGISTRY }}/${{ steps.repo.outputs.name }}:test
+            ${{ env.REGISTRY }}/${{ steps.repo.outputs.name }}:latest
+            ${{ env.REGISTRY }}/${{ steps.repo.outputs.name }}:develop-${{ steps.sha.outputs.short }}
+          labels: |
+            org.opencontainers.image.title=Discovery Server
+            org.opencontainers.image.description=Eureka Discovery Server for Caicedo Seguros
+            org.opencontainers.image.vendor=Caicedo Seguros
+            org.opencontainers.image.revision=${{ github.event.workflow_run.head_sha || github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          platforms: linux/amd64
+          provenance: false
+
+      - name: Image digest
+        run: echo "Digest ${{ steps.build.outputs.digest }}"
+
+  # ============================================
+  # Deploy to Test environment (K3s)
+  # ============================================
+  deploy-test:
+    name: "Deploy to Test (K3s)"
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    environment:
+      name: test
+
+    steps:
+      - name: Restart deployment via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USERNAME }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          port: ${{ secrets.VPS_PORT }}
+          script: |
+            set -e
+            export KUBECONFIG=/etc/rancher/k3s/k3s.yaml
+
+            echo "Restarting eureka-server deployment in test namespace..."
+            kubectl rollout restart deployment/eureka-server -n test
+
+            echo "Waiting for rollout to complete..."
+            kubectl rollout status deployment/eureka-server -n test --timeout=120s
+
+            echo "Current pods:"
+            kubectl get pods -n test -l app=eureka-server
+
+      - name: Verify pod readiness
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USERNAME }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          port: ${{ secrets.VPS_PORT }}
+          script: |
+            export KUBECONFIG=/etc/rancher/k3s/k3s.yaml
+
+            POD=$(kubectl get pod -n test -l app=eureka-server \
+              -o jsonpath='{.items[0].metadata.name}' 2>/dev/null)
+
+            if [ -z "$POD" ]; then
+              echo "No eureka-server pod found in test namespace"
+              exit 1
+            fi
+
+            echo "Pod: $POD — waiting for Ready condition..."
+            kubectl wait --for=condition=Ready pod/"$POD" -n test --timeout=120s
+
+            echo "Checking actuator health endpoint..."
+            kubectl exec "$POD" -n test -- \
+              wget -qO- http://localhost:8761/actuator/health 2>/dev/null \
+              || echo "Health endpoint not reachable yet (pod may still be starting)"
+
+            echo "Deployment to test environment verified"

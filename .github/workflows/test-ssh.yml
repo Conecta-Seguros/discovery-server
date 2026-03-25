@@ -31,41 +31,22 @@ jobs:
             echo "SSH Connection Successful!"
             echo "========================================="
             echo ""
-            echo "📊 System Information:"
+            echo "System Information:"
             echo "- Hostname: $(hostname)"
             echo "- User: $(whoami)"
-            echo "- OS: $(cat /etc/os-release | grep PRETTY_NAME | cut -d '"' -f 2)"
+            echo "- OS: $(grep PRETTY_NAME /etc/os-release | cut -d '"' -f 2)"
             echo "- Kernel: $(uname -r)"
             echo ""
-            echo "Docker Information:"
-            docker --version || echo "Docker not found"
-            docker-compose --version || echo "Docker Compose not found"
+            echo "K3s Information:"
+            export KUBECONFIG=/etc/rancher/k3s/k3s.yaml
+            k3s --version || echo "K3s not found"
+            kubectl version --client --short 2>/dev/null || kubectl version --client 2>/dev/null || echo "kubectl not found"
             echo ""
-            echo "Directory Check:"
-            if [ -d "/opt/conecta-seguros-backend" ]; then
-              echo "/opt/conecta-seguros-backend exists"
-              ls -la /opt/conecta-seguros-backend
-            else
-              echo "/opt/conecta-seguros-backend does NOT exist"
-            fi
+            echo "Cluster State:"
+            kubectl get nodes 2>/dev/null || echo "Cannot reach cluster"
             echo ""
-            echo "Environment File Check:"
-            if [ -f "/opt/conecta-seguros-backend/.env" ]; then
-              echo ".env file exists"
-              echo "   Permissions: $(ls -la /opt/conecta-seguros-backend/.env | awk '{print $1}')"
-            else
-              echo ".env file NOT found"
-            fi
-            echo ""
-            echo "Docker Compose File Check:"
-            if [ -f "/opt/conecta-seguros-backend/docker-compose.yml" ]; then
-              echo "docker-compose.yml exists"
-            else
-              echo "docker-compose.yml NOT found"
-            fi
-            echo ""
-            echo "Docker Registry Login Test:"
-            docker info | grep -i "registry" || true
+            echo "Namespaces:"
+            kubectl get namespaces 2>/dev/null || echo "Cannot list namespaces"
             echo ""
             echo "Disk Space:"
             df -h / | tail -1
@@ -77,7 +58,7 @@ jobs:
             echo "All checks completed!"
             echo "========================================="
 
-      - name: 📋 Test docker-compose config
+      - name: Validate K3s deployment access
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.VPS_HOST }}
@@ -85,9 +66,21 @@ jobs:
           key: ${{ secrets.VPS_SSH_KEY }}
           port: ${{ secrets.VPS_PORT }}
           script: |
-            cd /opt/conecta-seguros-backend
-            echo "🔍 Validating docker-compose.yml..."
-            docker-compose config --quiet && echo "docker-compose.yml is valid" || echo "docker-compose.yml has errors"
+            export KUBECONFIG=/etc/rancher/k3s/k3s.yaml
+            echo "Checking test namespace..."
+            kubectl get namespace test 2>/dev/null \
+              && echo "test namespace exists" \
+              || echo "test namespace NOT found — run deploy.sh first"
+            echo ""
+            echo "Checking eureka-server deployment..."
+            kubectl get deployment eureka-server -n test 2>/dev/null \
+              && echo "eureka-server deployment exists" \
+              || echo "eureka-server NOT deployed yet"
+            echo ""
+            echo "Checking GHCR image pull secret..."
+            kubectl get secret ghcr-credentials -n test 2>/dev/null \
+              && echo "ghcr-credentials secret exists" \
+              || echo "ghcr-credentials NOT found — run manage-secrets.sh first"
 
       - name: Success Summary
         if: success()
@@ -95,10 +88,9 @@ jobs:
           echo "SSH Connection Test PASSED!"
           echo ""
           echo "GitHub Actions can successfully connect to your VPS"
-          echo "All required files are in place"
-          echo "Docker is installed and accessible"
+          echo "K3s is installed and accessible"
           echo ""
-          echo "You're ready to deploy!"
+          echo "You're ready to deploy via cd.yml!"
 
       - name: Failure Summary
         if: failure()
@@ -112,3 +104,4 @@ jobs:
           echo "4. VPS_PORT is correct (usually 22)"
           echo "5. SSH key is added to ~/.ssh/authorized_keys on VPS"
           echo "6. VPS firewall allows SSH connections"
+          echo "7. K3s is installed: curl -sfL https://get.k3s.io | sh -"
