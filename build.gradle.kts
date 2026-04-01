@@ -35,13 +35,15 @@ dependencies {
     // Dotenv support
     implementation("io.github.cdimascio:dotenv-java")
 
-    // Cache abstraction (activates @EnableCaching + CaffeineCacheManager auto-config)
+    // Cache abstraction
     implementation("org.springframework.boot:spring-boot-starter-cache")
 
     // Caffeine for caching
     implementation("com.github.ben-manes.caffeine:caffeine")
 
 	// Annotations and utilities
+	implementation("org.jetbrains:annotations")
+
 	compileOnly("org.projectlombok:lombok")
 	annotationProcessor("org.projectlombok:lombok")
 	testCompileOnly("org.projectlombok:lombok")
@@ -64,6 +66,7 @@ dependencyManagement {
         dependency("com.github.ben-manes.caffeine:caffeine:3.2.3")
         dependency("io.github.cdimascio:dotenv-java:3.2.0")
         dependency("com.thoughtworks.xstream:xstream:1.4.21")
+		dependency("org.jetbrains:annotations:26.1.0")
     }
 }
 
