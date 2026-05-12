@@ -1,6 +1,6 @@
 plugins {
 	java
-	id("org.springframework.boot") version "4.0.3"
+	id("org.springframework.boot") version "4.0.6"
 	id("io.spring.dependency-management") version "1.1.7"
 	jacoco
 }
@@ -63,7 +63,7 @@ dependencyManagement {
 		mavenBom("org.springframework.cloud:spring-cloud-dependencies:${property("springCloudVersion")}")
 	}
     dependencies {
-        dependency("com.github.ben-manes.caffeine:caffeine:3.2.3")
+        dependency("com.github.ben-manes.caffeine:caffeine:3.2.4")
         dependency("io.github.cdimascio:dotenv-java:3.2.0")
         dependency("com.thoughtworks.xstream:xstream:1.4.21")
 		dependency("org.jetbrains:annotations:26.1.0")
